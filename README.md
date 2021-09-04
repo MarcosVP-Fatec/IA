@@ -13,7 +13,8 @@
 
 ---------------------------------------------------------------
 Nome do Projeto : **Inteligência Artificial**     
-![IA](https://github.com/MarcosVP-Fatec/Saloon/blob/master/src/main/resources/images/saloon_porta_64k.png?raw=true)  
+
+![IA](https://github.com/MarcosVP-Fatec/IA/blob/c7b036fe0df4a43c8dd3ee7ebf2e9370775e5b35/images/ia.jpg?raw=true)  
 
 ## Objetivo do Projeto  
 
