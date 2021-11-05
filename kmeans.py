@@ -41,7 +41,7 @@ class KMeans:
             self.centers[n] = copy.deepcopy(vectors[n])
         self.center_length = len(self.centers[0])
         self.classified_vectors = copy.deepcopy(vectors)
-        self.n_vectors - len(vectors)
+        self.n_vectors = len(vectors)
         for n in range(self.n_vectors):
             self.classified_vectors[n].append([]) #vector has no class
 
