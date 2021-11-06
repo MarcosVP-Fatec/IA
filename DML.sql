@@ -3,6 +3,7 @@
 -- ------------------------------------------------------------------------
 DELETE FROM sugerir WHERE 1=1;
 DELETE FROM produto WHERE 1=1;
+COMMIT;
 
 INSERT INTO produto (prd_id) VALUES ('café');
 INSERT INTO produto (prd_id) VALUES ('leite');
