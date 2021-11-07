@@ -68,10 +68,9 @@ with open(curpath + 'basket.csv', 'r') as arqcsv:
     cur.execute("COMMIT")
 
     cur.execute("SELECT COUNT(*) FROM produto")
-    print("=============================")
-    print("TOTAL DE PRODUTOS: " , cur.fetchall()[0][0])
-    print("=============================")
-
+    print("====================================")
+    print("TOTAL DE PRODUTOS       : " , cur.fetchall()[0][0])
+    print("====================================")
 
     # Inserindo Transações
     reader = csv.reader(arqcsv, delimiter=',', quoting=csv.QUOTE_NONE)    
@@ -89,8 +88,16 @@ with open(curpath + 'basket.csv', 'r') as arqcsv:
     cur.execute("COMMIT")
 
     cur.execute("SELECT COUNT(*) FROM transacao")
-    print("TOTAL DE TRANSAÇÕES: " , cur.fetchall()[0][0])
-    print("=============================")
+    print("TOTAL DE LINHAS GRAVADAS: " , cur.fetchall()[0][0])
+    print("====================================")
 
+    #n_tot_transact = 0
+    # for (linha) in cur:
+    #     n_tot_transact += linha[1]
+    cur.execute("SELECT COUNT(X.tran_id) FROM (SELECT T.tran_id FROM transacao T GROUP BY T.tran_id) X")
+    print("TOTAL DE TRANSAÇÕES     : " , cur.fetchall()[0][0])
+    print("====================================")
+    input("Tecle algo para fechar...")
+    
 arqcsv.close()
 

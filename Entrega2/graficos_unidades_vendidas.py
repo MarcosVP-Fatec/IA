@@ -69,8 +69,7 @@ if filter_period != "":
         c_title += "\nFiltro - Período de Venda: " + filter_period
 c_title += "" if n_limit == 0 or n_limit > 10000 else ("\nLimitado às primeiras " + str(n_limit) + " maiores quantidades")
 plt.title(c_title)
-
-#plt.figure(figsize=(10,1000))
+#plt.figure(figsize=(20,20))
 count = 1
 if cur is not None:
     for ( linha ) in cur:

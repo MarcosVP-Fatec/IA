@@ -3,143 +3,165 @@
 ##
 ## Exemplos em https://mariadb.com/resources/blog/how-to-connect-python-programs-to-mariadb/
 
+import os
 from mariadb_connect import mariadb_connect_cursor
+cur = mariadb_connect_cursor()
 
-def ler_bd():
+def ler_produtos():
+    """
+    :return: Lista de produtos por ordem alfabética.
+    """
+    cur.execute("SELECT P.prd_id FROM produto P ORDER BY P.prd_id")
+    if cur is None:
+        print()
+        print("Não há produtos cadastrados!")
+        return []
 
-    # Conectando com o MariaDB - Pegando o cursor
-    cur = mariadb_connect_cursor()
-    # Sugestões - Pesquisa e imprime + adiciona itens ao vetor de dados
-    cur.execute("SELECT A.sug_percept  \
-                      , A.sug_sugestao \
-                 FROM sugerir A      \
-                 ORDER BY A.sug_percept, A.sug_sugestao")
-
-    regras    = []
-
-    for ( item ) in cur:
-
-        regras.append( { "percept" : item[0]                        \
-                       , "relation": " == "                         \
-                       , "action"  : item[1]                        })
-
-    return regras
+    produtos = []
+    for linha in cur:
+        produtos.append(linha[0])
+    return produtos
     
-rule_db = ler_bd()
-
 # Retorna a sugestão conforme as regras
-def eval_rule(rule, percept):
-    if eval("'" + percept + "'" + rule['relation'] + "'" + rule['percept'] + "'"):
-        return rule['action']
-    else:
-        return None
+def printProducts(produtos):
+    """
+    Faz a impressão em tela da lista de produtos com código para seleção
+    """
+    n_proximo = 0
+    n_total = len(produtos)
+    colunas = 8
+    largura = 12
+    largura_src = '{:<'+str(largura)+'}'
+    c_traco = "-" * ((8+largura) * colunas)
+    os.system('cls')
+    print(c_traco)
+    print(" Itens para Compra")
+    print(c_traco)
+    quebra = ""
+    n_add_cols = colunas - (len(produtos) % colunas)
+    for item in produtos:
+        n_item = n_proximo + 1
+        quebra = "\n" if n_item % colunas == 0 else ""
+        print( '{:>3}'.format(str(n_item)) , "-" , largura_src.format(item[:largura]) , "|", end = quebra )
+        n_proximo += 1
+    if n_add_cols > 0:
+        quebra = ""
+        largura_src = '{:<'+str(largura+6)+'}'
+        for item in range(n_add_cols):
+            print( largura_src.format("") , "|", end = quebra )    
+    if quebra == "":
+        print("")
+    print(c_traco)
+    return c_traco
 
-def rule_engine(rule_db, percept):
-    sugestao = ""
-    for rule in rule_db:
-        sugestao = eval_rule(rule,percept)
-        if sugestao is not None:
+def printPurchase( carrinho , produtos ):
+    """
+    Lista o que já foi comprado
+    """
+    if len(carrinho) > 0:
+        c_texto = "Você já comprou: "
+        print(c_texto,end="")
+        primeiro = True
+        for item in carrinho:
+            print(" "*(0 if primeiro else len(c_texto)),carrinho[item], \
+                  "["+'{:>2}'.format(str(produtos.index(item)+1))+"]", \
+                  item )
+            primeiro = False
+
+def inputPurchase( texto , carrinho , already_suggested ):
+    """
+    Rotina que identifica o que foi comprado e retorna um dicionário com item e quantidade
+    """
+    comprado = input( texto ).replace(" ","").replace(".",",").split(",")
+    comprado = [int(item) for item in comprado if item.isdigit() and 0 < int(item) < (len(produtos)+1)]
+    if len(comprado) == 0:
+        return []
+    comprado.sort()
+    n_qtd = 0
+    for item in comprado:
+        item = produtos[item-1]
+        n_qtd = carrinho[item] + 1 if {item}.issubset(carrinho) else 1
+        carrinho.update({item: n_qtd})
+        if already_suggested.count(item) == 0:
+            already_suggested.append(item)
+    return len(comprado) > 0
+
+def informar_lista_de_compra(produtos,sug_sugestao):
+    """
+    Digitar os códigos do que será comprado e retornar uma lista numérica de int
+    """
+    carrinho = dict()
+    already_suggested = []
+
+    os.system('cls')
+    c_traco = printProducts(produtos)
+    while True:    
+        if not inputPurchase("Informe os códigos dos itens que quer comprar (separados por vírgula): ",carrinho,already_suggested):
             break
-        
-    return "" if sugestao is None else sugestao
-
-def jah_existe(rule, percept):
-    for ( key ) in rule:
-        if key["percept"] == percept:
-            return True
-    return False
-
-###################################################################
-# Permite incluir novas regras
-def incluir_regras():
-    while True:
-        rule_db = ler_bd()
-        novaregra = input("Informe o que foi comprado para nova regra: ").replace(" ","")
-        if novaregra == "":
-            break
-        
-        novaregra = novaregra.split(',')
-        novaregra.sort()
-        novaregra = ",".join( novaregra )
-
-        if jah_existe(rule_db, novaregra):
-            print("Regra já existe : " + novaregra)
+        os.system('cls')
+        printProducts( produtos )
+        printPurchase( carrinho , produtos )
+        sugestoes = getSuggest(carrinho,suggest_bd,already_suggested, 2)
+        print(c_traco)
+        if len(sugestoes) > 0:
+            print("Não esqueça de levar também: ",end="")
+            separador = ""
+            for item in sugestoes:
+                print( separador + str(produtos.index(item)+1) + "-" + item , end = "")
+                separador = " | "
+            print()
         else:
-            novasugestao = input("Informe a sugestão: ")
-            if novasugestao != "":
-                cur = mariadb_connect_cursor()
-                for ( novo ) in novaregra.split():
-                    cur.execute("SELECT COUNT(*)      \
-                                 FROM produto P       \
-                                 WHERE P.prd_id = ?"  , \
-                                 (novo,))
+            print("Deseja mais alguma coisa?")    
+        print(c_traco)    
+    return len(carrinho) > 0
 
-                    if cur is not None:
-                        for ( item ) in cur:
-                            if item[0] == 0:
-                                cur.execute("INSERT INTO produto (prd_id) \
-                                               VALUES (?)" , \
-                                            (novo,))
-                                cur.execute("COMMIT")
-                            break
+def getSuggest(carrinho, suggest_bd, already_suggested, n_qtd_suggest=1):
+    """
+    Retorna uma lista de sugestões conforme quantidade solicitada
+    Considera as sugestões já exibidas para não mostrar novamente.
+    """
+    sugs = []
+    for item in carrinho:
+        if n_qtd_suggest == 0: break
+        if {item}.issubset(suggest_bd):
+            for item_sugerido in suggest_bd[item]:
+                if n_qtd_suggest == 0: break
+                if sugs.count(item_sugerido) == 0 and already_suggested.count(item_sugerido) == 0 :
+                    sugs.append(item_sugerido)
+                    already_suggested.append(item_sugerido)
+                    n_qtd_suggest -= 1
+    return sugs
 
-                    cur.execute("SELECT COUNT(*)      \
-                                 FROM produto P       \
-                                 WHERE P.prd_id = ?"  , \
-                                 (novo,))
+def ler_sugestoes():
+    """
+    Lê o banco de dados de sugestões e retorna um dicionário.
+    """
+    sugs = dict()
 
-                #Insere a sugestão no produto
-                cur.execute("SELECT COUNT(*)      \
-                             FROM produto P       \
-                             WHERE P.prd_id = ?"  , \
-                             (novasugestao,))
-                if cur is not None:
-                   for ( item ) in cur:
-                       if item[0] == 0:
-                          cur.execute("INSERT INTO produto (prd_id) \
-                                       VALUES (?)" , \
-                                       (novasugestao,))
-                          cur.execute("COMMIT")
-                          break
+    cur.execute("SELECT sug_percept         \
+                      , sug_sugestao        \
+                      FROM sugerir          \
+                      ORDER BY sug_percept  \
+                             , sug_conf DESC")
+    if not cur is None:
+        c_last_item = ""
+        for linha in cur:
+            percept = linha[0]
+            if not {percept}.issubset(sugs):
+                sugs[percept] = []
+            sugs[percept].append(linha[1])
 
-                #insere a sugestâo
-                cur.execute("INSERT INTO sugerir        \
-                             (sug_percept, sug_sugestao) VALUES (?,?)" , \
-                             (novaregra,novasugestao,))
-                                
-                cur.execute("COMMIT")
-
+    return sugs
 
 ###################################################################
-# Informar o que foi comprado e exigir a sugestão
+# Executar as compras e ver sugestões
+produtos = ler_produtos()
+suggest_bd = ler_sugestoes()
 
-def informar_compra():
-    while True:
-        comprado = input("Informe o que foi comprado: ").replace(" ","")
-        if comprado == "":
-            break
-
-        comprado = comprado.split(',')
-        comprado.sort()
-        comprado = ",".join( comprado )
-
-        sugestao = rule_engine(rule_db, comprado)
-        if sugestao != '':
-            print("  Não se esqueça de comprar " + sugestao )
-        
-
-###################################################################
-# Verificando o que irá rodar
 while True:
-    opc = input("Selecione 1-Incluir Regras, 2-Informar compra: ")
-    if opc == '1':
-        incluir_regras()
-        rule_db = ler_bd()
-    elif opc == '2':
-        informar_compra()
-    elif opc == '':
-        break
-    else:
-        print("Opção inválida: " + opc)
+    
+    if len(produtos) == 0: break
 
+    if not informar_lista_de_compra(produtos,suggest_bd):
+        break
 
