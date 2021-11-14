@@ -144,7 +144,7 @@ def ler_sugestoes():
                       ORDER BY sug_percept  \
                              , sug_conf DESC")
     if not cur is None:
-        c_last_item = ""
+        #c_last_item = ""
         for linha in cur:
             percept = linha[0]
             if not {percept}.issubset(sugs):
