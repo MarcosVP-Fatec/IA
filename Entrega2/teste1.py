@@ -158,10 +158,10 @@ def ler_sugestoes():
 produtos = ler_produtos()
 suggest_bd = ler_sugestoes()
 
-while True:
+# while True:
     
-    if len(produtos) == 0: break
+#     if len(produtos) == 0: break
 
-    if not informar_lista_de_compra(produtos,suggest_bd):
-        break
+#     if not informar_lista_de_compra(produtos,suggest_bd):
+#         break
 
